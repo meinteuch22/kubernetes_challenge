@@ -1,0 +1,146 @@
+
+
+##### DevOps Technical Assessment ################################
+### Jean-Gert Nesselbosch, 12/2019 ###############################
+
+(1) Intro
+
+  I used "kops" to do the initial cluster deployment on my private
+  AWS account. I would have preferred an IAC-approach for this task
+  (maybe by using Terraform or the like) but since I had a lot to
+  grok anyway (concerning Kubernetes) I just didn't had the time.
+  
+  kops init of the cluster essentially went like this :
+  
+  - init S3 - bucket on AWS for kubernetes' internal administration tasks
+  
+  - set several env vars including AWS-credentials, cluster-name, S3-bucket-
+    address etc.
+  
+  - "$ kops create cluster --zones eu-central-1a,eu-central-1b,eu-central-1c ${NAME_OF_CLUSTER}"
+  
+    Three zones are being used for fault-tolerance reasons (since replicas of services are spread
+    across nodes on all available zones by default -> see kubernetes docs)
+  
+  - "$ kops edit ig nodes --name ${NAME} "
+   
+    Edit max/min (e.g. 5/3) number of nodes to be built.
+  
+  - kops update cluster ${NAME} --yes
+  
+  The cluster should have been build after several minutes
+  
+(2) The source
+  
+  "git clone https://github.com/meinteuch22/kubernetes_challenge.git"
+  
+  The source tree is divided into a
+  
+  "app" (containing the application an its configuration + README)
+  
+  and a
+  
+  "kubernetes" (containing the yaml-files defining all infrastructural
+  kubernetes configurations)
+  
+  -part
+
+  From the "app" - part a Docker image has been built which is being hosted
+  on the Docker-hub (see "kubernetes/workloads.yaml" where this image is being
+  referenced as part of the Deployment-definition)
+
+(3) The Assessment-tasks and their solutions
+
+  (3.1) Fault tolerance regarding loss of one node
+
+    This is given by the Horizontal-Pod-Autoscaler Definition where 
+  
+    *minReplicas* is set to the value of "2" (see "autoscaler.yaml")
+  
+    Explanation :
+
+    since the number of zones (see "kops" above) has been set
+    to three (same as number of min nodes in this case) and "minReplicas" for our
+    only service "supplementsapi" has been set to 2, by best-effort of the
+    kubernetes-scheduler itself (which spreads replicas of each given service
+    across *all available zones*), at least one service-instance is always up
+    (concerning it's underlying node).
+
+    Regarding fault-tolerance of our database, we are in the hands of AWS since
+    our service relies on a DocumentDB-Cluster which is supposed to be fault-tolerant   
+    (see https://aws.amazon.com/de/documentdb/ )   
+
+
+    * By the way: MongoDB (-> AWS DocumentDB) "as a Service" has been given preference
+    * here over a self-baked MongoDB installation for obvious reasons of scalability
+    * and fault-tolerance.
+
+  (3.2) Automatic Scalability depending on CPU-load
+
+    Again, this is where HPA comes to the rescue. The params are set in "workloads.yaml" (for the
+    CPU-request-definition of the service) and "autoscaler.yaml" (for the threshold-definition) 
+  	 
+  (3.3) Expose secure credentials as an environment variable
+
+    To be honest : I wouldn't do that at all.
+
+    But since it has been requested, I've used kubernetes secrets. See dbsecrets.yaml, where I've
+    put user and pwd for the DocumentDB in use (which has been destroyed by the time you're reading
+    this text). These secrets are beeing exposed as environment-vars on the container where the
+    supplements-api lives and are being slurped in (see app/config/db.js) 
+
+    The alternative to this highly insecure approach (pwds in git, pwds in the container : no !) would
+    be to use a Vault-Cluster for instance. This would be a place where secrets could be securily kept,
+    in a revokable manner. See https://www.hashicorp.com/products/vault/
+
+  (3.4) Persistant volume cofiguration
+
+    There was no need for a persistent volume. Instead a hosted MongoDB (-> AWS DocumentDB)
+    is being used.
+
+    The concept of kubernetes persistent volumes (-> "PersistentVolumeClaims" and the like) is of course 
+    also familiar but certainly not an option when it comes to fault-tolerant distributed primary/secondary-
+    db-installations (apart from the backup question which is also an issue when not using a hosted service.) 
+
+  (3.5) readiness and liveness probe
+
+    See the defining parts in "workloads.yaml" and the endpoints in "app/routes/checks.js"
+
+  (3.6) If possible, Ingress should be deployed
+
+    No need for that.
+    We have only one publically available service with a NodePort where exactly one LoadBalancer suffices
+    to do the job.  
+
+   
+(4) Final words
+
+ (4.1) The cluster setup is certainly suboptimal. In fact it's a shame. As I said:
+       I would prefer a Terraform solution
+ (4.2) I took AWS since I don't know Azure or Google Cloud
+ (4.3) I took kops since I don't know anything else (apart from Terraform (4.1))
+ (4.4) CI/CD : sure ! I know Jenkins and it's pipelines well. But I have no idea yet
+       hown to integrate kubernetes with it.
+ (4.5) Monitoring : I have to think it over.
+ (4.6) Multiple Regions : no idea yet.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -19,7 +19,7 @@ spec:
     spec:
      containers:
      - name: supplementsapi 
-       image: meinteuch/a_challenge:1 
+       image: meinteuch/a_challenge:2 
 
        readinessProbe:
         httpGet:

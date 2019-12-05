@@ -1,0 +1,124 @@
+
+Bei dieser Nodejs/Express/MongoDB basierten API handelt es sich
+um eine modifizierte Version einer prototypischen Anwendung, die
+ich mal für eine Frima geschrieben habe. Verwaltet wird hier über
+eine REST-API eine Bestand von Nahrungsmittel-Supplementen.
+
+Wesentlich ist hier lediglich die Anbindung an eine MongoDB ( in der
+konkreten AWS-Implementierung für diese Challenge eine Amazon DocumentDB )
+und der unter (2) beschriebene Einstiegspunkt. 
+
+      
+(1) Endpunkte der api
+
+    (1.1) localhost:3000/api/users , POST
+    
+      dient zum anlegen von usern
+      
+      Beispiel-request :
+      
+      curl --header "Content-Type: application/json"
+           --request POST 
+           --data '{"user": {"username":"xyzuser","pwd":"xyzdeinpasswort", "email":"fafa@wawa.de", "access":"GET|POST|PATCH|PUT|DELETE"}}' http://localhost:3000/api/users
+    
+      *Liefert insbesondere ein JSON-Webtoken* zurueck, dass fuer die
+       Ansprache der Endpunkte "order" und "supplements" benötigt wird
+       (siehe unten).
+    
+    
+    (1.2) localhost:3000/api/supplements/order , GET
+    
+          Bestellt Supplements deren stock-threshold unterschritten wurde
+          in dem es ein Bestell-csv-file schreibt und diesen (unter Nutzung
+          eines Dropbox-Tokens) nach dropbox schiebt.
+          
+          siehe config/constants.js fuer das DropBox-Token
+          und den Threshold - Wert
+          
+          Gegenwärtig zeigt das Token auf meinen DropBox-account.
+          Bitte ggf. fuer Testzwecke ändern. 
+    
+    (1.3) localhost:3000/api/supplements/<sku> , GET, POST, PATCH, PUT, DELETE
+    
+          GET (ohne sku - Parameter): holt alle vorhadenen Supplements aus der DB
+                Angehaengte Filter, wie z.b. "manufacturer=lalala & pending_order=true"
+                filtern die Ausgabe entsprechend
+                
+          POST (ohne sku - Parameter): erzeugt neues Supplement. Payload bei diesem request sieht
+          etwa so aus :
+          
+             {
+
+                 "supplement": {
+     
+                    "name": "Zink",
+                    "manufacturer": "Rapunzel GmbH",
+                    "sku": "RP_Z_234",
+                    "vendorId": "RaPu",
+                    "stock": 101,
+                    "size": "large",
+                    "active_ingredient": "Zink 299",
+                    "pending_order": 0
+     
+               }
+             }
+             
+          PUT (*mit* sku-Parameter) . Payload wie bei POST
+          
+          PATCH (*mit* sku-Parameter) . Payload wie bei POST, aber lediglich
+          mit einer beliebigen Teilmenge der keys (und zugehoerigen values).
+          Heisst : was nicht im request steht, bleibt erhalten
+          
+          DELETE. Klar
+          
+    (1.4) localhost:3000/api/login , POST
+    
+          Payload:
+          
+          {
+              "user": {
+               
+                   "username" : "hanstester",
+                   "pwd"      : "pwd_here"
+          
+          }    } 
+    
+       
+          *Liefert ebenfalls ein JSON webtoken zurueck*
+            
+(2) Benutzung der API.
+
+    (2.1) Lege zunächst einen Nutzer an, wie unter (2.1) beschrieben.
+          Nur dann koennen, unter Nutzung des zurueckgelieferten webtokens
+          die interessanten API - Endpunkte genutzt werden.
+          
+    (2.2) Lege ein paar Supplements wie unter (2.3) beschrieben an
+    
+(3) Bemerkungen :
+
+
+    - Das Rechte - Management ist ziemlich rudimentaer (user koennen
+      ueber den key "access" auf Kombinationen von moeglichen request-
+      Methoden beschraenkt werden (POST, GET, PUT, DELETE, PATCH ).
+      siehe (2.1)
+      
+      Das kann man aber leicht ueber ein user-spezifisches Rechte-dictionary
+      verbessern :
+      
+      ...
+      "access" : {
+      
+          "api_endpoint_a" : "POST|GET",
+          "api_endpoint_b"  : "GET",
+          ...  
+      
+      
+      
+      }  
+
+
+        
+               
+        
+       
+

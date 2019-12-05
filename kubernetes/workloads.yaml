@@ -1,0 +1,48 @@
+---
+
+apiVersion: apps/v1
+kind: Deployment 
+
+metadata:
+ name: supplementsapi 
+
+spec:
+ selector:
+  matchLabels:
+   app: supplementsapi 
+ replicas: 1 
+ template:
+
+    metadata:
+     labels: 
+      app: supplementsapi 
+    spec:
+     containers:
+     - name: supplementsapi 
+       image: meinteuch/a_challenge:1 
+
+       readinessProbe:
+        httpGet:
+         path: /ready
+         port: 3000
+
+       livenessProbe:
+        httpGet:
+         path: /healthy
+         port: 3000
+
+       resources:
+        requests:
+         cpu: 50m
+
+       env:
+       - name: DB_USERNAME
+         valueFrom:
+          secretKeyRef:
+           name: dbsecrets 
+           key: username
+       - name: DB_PASSWORD
+         valueFrom:
+          secretKeyRef:
+           name: dbsecrets 
+           key: pwd

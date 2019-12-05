@@ -1,0 +1,27 @@
+{
+  "name": "my_a_challenge",
+  "version": "1.0.0",
+  "description": "A Challenge Solution",
+  "main": "supplements.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jean-Gert Nesselbosch",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
+    "csv": "^5.1.1",
+    "csv-writer": "^1.5.0",
+    "dotenv": "^8.0.0",
+    "express": "^4.17.1",
+    "express-session": "^1.16.2",
+    "fast-csv": "^3.4.0",
+    "isomorphic-fetch": "^2.2.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongodb": "^3.3.0-beta2",
+    "mongoose": "^5.6.7",
+    "node-cache": "^4.2.1",
+    "request": "^2.88.0"
+  }
+}

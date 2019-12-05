@@ -68,7 +68,6 @@ function build_csv(supplements){
 function upload_to_dropbox(fn){
 
 
-    //var access_token = "sv6-iaO0MNAAAAAAAAAADF70rNsGbESKEXfvrFeTG24PkcZwOgflb4m5pAGaFyxC";
     var access_token = constants.DROPBOX_TOKEN; 
     var filename = fn;
     var content = fs.readFileSync(filename);
